@@ -1,0 +1,46 @@
+{
+  "name": "indexthebee",
+  "version": "0.0.1",
+  "description": "Another IndexedDB wrapper",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bjjb/IndexTheBee.git"
+  },
+  "keywords": [
+    "indexedDB",
+    "wrapper",
+    "database",
+    "promises"
+  ],
+  "author": "bjjb",
+  "license": "ISC",
+  "devDependencies": {
+    "bluebird": "^3.0.2",
+    "chai": "^3.4.0",
+    "coffee-script": "^1.10.0",
+    "express": "^4.13.3",
+    "fake-indexeddb": "^1.0.3",
+    "jade": "^1.11.0",
+    "jstransformer-coffee-script": "^1.0.0",
+    "mocha": "^2.3.3"
+  },
+  "bugs": {
+    "url": "https://github.com/bjjb/IndexTheBee/issues"
+  },
+  "homepage": "https://github.com/bjjb/IndexTheBee#readme",
+  "dependencies": {
+    "bluebird": "^3.0.2",
+    "fake-indexeddb": "^1.0.3",
+    "express": "^4.13.3",
+    "jade": "^1.11.0",
+    "jstransformer-coffee-script": "^1.0.0",
+    "chai": "^3.4.0"
+  }
+}

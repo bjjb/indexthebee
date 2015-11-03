@@ -1,0 +1,24 @@
+{
+  "name": "indexthebee",
+  "description": "Another IndexedDB wrapper",
+  "main": "index.js",
+  "authors": [
+    "bjjb"
+  ],
+  "license": "ISC",
+  "keywords": [
+    "indexedDB",
+    "wrapper",
+    "database",
+    "promises"
+  ],
+  "moduleType": [],
+  "homepage": "http://bjjb.github.io/indexthebee",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "test"
+  ]
+}
