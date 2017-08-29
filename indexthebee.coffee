@@ -1,79 +1,43 @@
 'use strict'
 
-# IndexTheBee - an IndexedDB wrapper
-#
-# Features
-#
-# - stores and indices available ahead-of time
-# - keyRange creation
-# - promise or callback based
-# - small
-# - no additional requirements
-Database = (idb) ->
-  self = @
-  transaction = idb.transaction(idb.objectStoreNames)
-  objectStoreNames = (n for n in idb.objectStoreNames)
-  objectStoreNames.forEach (store) ->
-    f = (mode = 'readonly') -> idb.transaction(store, mode).objectStore(store)
-    ['count', 'get', 'getAll', 'openCursor', 'add', 'put', 'delete',
-    'clear'].forEach (action) ->
-      f[action] = Database[action](f)
-    indexNames = (n for n in transaction.objectStore(store).indexNames)
-    indexNames.forEach (index) ->
-      g = -> f().index(index)
-      ['count', 'get', 'getAll'].forEach (action) ->
-        g[action] = Database[action](g)
-      f[index] = g
-    self[store] = f
-  @idb = idb
+{ indexedDB, Promise, console } = @
+
+Store = (db, storeName) ->
+  @indexNames = db.transaction(storeName).objectStore(storeName).indexNames
+  @[indexName] = new Index(@, indexName) for indexName in @indexNames
+
+Database = (db) ->
+  { @name, @version, objectStoreNames } = db
+  @objectStoreNames = (name for name in objectStoreNames)
+  if name in db
+    console.warn("#{name} will mask a property of #{db} - your app may not function as expected")
+  @[name] = new Store(db, name) for name in @objectStoreNames
   @
+    
+IndexTheBee = ({ name, version, migrations }) ->
+  migrations ?= []
+  version ?= 1
+  new Promise (resolve, reject) ->
+    request = indexedDB.open(name, version)
+    request.addEventListener 'upgradeneeded', (event) ->
+      { oldVersion, newVersion, target } = event
+      migration(target.result) for migration in migrations[oldVersion...newVersion]
+    request.addEventListener 'success', (event) ->
+      db = new Database(event.target.result)
+      IndexTheBee.databases.push(db)
+      resolve db
+    request.addEventListener 'error', (event) ->
+      console.error("Failed to create database #{name}")
+      reject(event.error)
 
-Database.read = (action) ->
-  (target) ->
-    (range, direction) ->
-      new Promise (resolve, reject) ->
-        args = []
-        args.push(Database.keyRange(range)) if range?
-        args.push(direction) if direction?
-        result = []
-        r = target()[action](args...)
-        r.addEventListener 'success', ->
-          return resolve(result) unless @result?
-          return resolve(@result) unless @result.value?
-          result.push(@result.value)
-          @result.continue()
-        r.addEventListener 'error', ->
-          console.error @error
-          reject @error.message
+IndexTheBee.databases = []
 
-Database.write = (action) ->
-  (target) ->
-    (object, key) ->
-      new Promise (resolve, reject) ->
-        r = target('readwrite')[action](object, key)
-        r.addEventListener 'success', ->
-          console.debug "Overwrote", object, key
-          resolve(@result)
-        r.addEventListener 'error', ->
-          console.error @error
-          reject @error.message
+IndexTheBee.delete = (db) ->
+  db = @databases.find((d) -> d.name is db) if typeof db is 'string'
+  req = indexedDB.deleteDatabase(db.name)
+  req.addEventListener 'success', (e) =>
+    @databases = @databases.filter (x) -> x isnt db # :-/ not super optimised
+  req.addEventListener 'error', (e) =>
+    console.error("Failed to delete database: #{db}")
 
-Database.count = Database.read('count')
-Database.get = Database.read('get')
-Database.openCursor = Database.read('openCursor')
-Database.getAll = Database.read('openCursor')
-Database.add = Database.write('add', 'readwrite')
-Database.put = Database.write('put', 'readwrite')
-Database.delete = Database.write('delete', 'readwrite')
-Database.clear = Database.write('clear', 'readwrite')
-
-Database.keyRange = (arg) ->
-  return IDBKeyRange.only(arg) unless arg instanceof Array
-  [lower, upper] = arg
-  if lower?
-    if upper?
-      IDBKeyRange.bound(lower, upper)
-    else
-      IDBKeyRange.lowerBound(lower)
-  else
-    IDBKeyRange.upperBound(upper)
+@indexTheBee = IndexTheBee

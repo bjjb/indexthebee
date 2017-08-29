@@ -28,6 +28,10 @@ In a browser, add
 
 <script>
   var dbname = "My database"
+  var migrations = [
+    function(db) { db.createStore('dogs') }, // version 1
+    function(db) { db.createStore('cats') }  // version 2
+  ]
   var dbversion = 2
   var db = IndexTheBee('dbname', dbversion, migrations)
 </script>
@@ -35,10 +39,11 @@ In a browser, add
 
 Migrations are optional, but if the DB at `dbname` isn't the right version,
 you'll want to run some. Migrations should be an array of functions that are
-called with the version-change transaction as an argument.
+called with the db as an argument.
 
 For server-side environments, IndexedDB is not available by default, so you'll
-need to install an implementation. It also needs a Promises/A+ implementation.
+need to install an implementation. It also needs a Promises/A+ implementation
+(though that's probably already available).
 
 ```
 var indexedDB = require 'some-idb-lib'
@@ -52,12 +57,12 @@ var db = Database(dbname, dbversion, migrations)
 
 ```
 db.createStore('dogs', keyPath: 'id', autoIncrement: true)    // Promises!
-  .then(function() { return db.dogs.add({ name: 'Rover' }))   // Stores as properties on the db!
-  .then(function() { return db.dogs.add({ name: 'Fido' }))     
-  .then(function() { return db.dogs.addIndex('name', 'name')) // Easy index creation!
-  .then(function() { return db.dogs.name.get('Fido'))         // Indexes as properties on the store!
-  .then(function() { return db.dogs.count())                  // Familiar API
-  .then(function() { return db.dogs.getAll())                 // ...with some additions.
+  .then(() => db.dogs.add({ name: 'Rover' }))   // Stores as properties on the db!
+  .then(() => db.dogs.add({ name: 'Fido' }))     
+  .then(() => db.dogs.addIndex('name', 'name')) // Easy index creation!
+  .then(() => db.dogs.name.get('Fido'))         // Indexes as properties on the store!
+  .then(() => db.dogs.count())                  // Familiar API
+  .then(() => db.dogs.getAll())                 // ...with some additions.
 ```
 
 Check out the tests on the [project page](http://bjjb.github.io/indexthebee).
